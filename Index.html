@@ -44,16 +44,15 @@
 async function fetchCurrencyRates() {
   const currencies = ["USD", "EUR", "CHF", "SGD"];
   try {
-    // Берём курсы к PLN через exchangerate.host API
-    const res = await fetch("https://api.exchangerate.host/latest?base=PLN&symbols=USD,EUR,CHF,SGD");
-    const data = await res.json();
+    const url = "https://api.exchangerate.host/latest?base=PLN&symbols=USD,EUR,CHF,SGD";
+    const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+    const resProxy = await fetch(proxyUrl);
+    const text = await resProxy.json();
+    const data = JSON.parse(text.contents);
 
-    // exchangerate.host даёт курс базовой валюты в data.rates
-    // Нужен курс валюты к PLN — invert
     currencies.forEach(cur => {
       const ratePLNtoCur = data.rates[cur]; // PLN → cur
       const rateCurToPLN = 1 / ratePLNtoCur;
-      // Обновляем таблицу
       const td = document.querySelector(`#currency-table tr:nth-child(${currencies.indexOf(cur)+1}) td:nth-child(2)`);
       td.textContent = rateCurToPLN.toFixed(4);
     });
@@ -63,7 +62,6 @@ async function fetchCurrencyRates() {
       obj[cur] = 1 / ratePLNtoCur;
       return obj;
     }, {});
-
   } catch (e) {
     console.error("Ошибка загрузки курсов валют", e);
     currencies.forEach((cur, i) => {
@@ -74,13 +72,14 @@ async function fetchCurrencyRates() {
   }
 }
 
-// Цена золота за унцию в USD — возьмём из exchangerate.host (они поддерживают XAU)
 async function fetchGoldPriceInUSD() {
   try {
-    // Конвертация 1 унции золота (XAU) в USD
-    const res = await fetch("https://api.exchangerate.host/convert?from=XAU&to=USD&amount=1");
-    const data = await res.json();
-    return data.result; // цена в USD за 1 унцию
+    const url = "https://api.exchangerate.host/convert?from=XAU&to=USD&amount=1";
+    const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+    const resProxy = await fetch(proxyUrl);
+    const text = await resProxy.json();
+    const data = JSON.parse(text.contents);
+    return data.result;
   } catch (e) {
     console.error("Ошибка загрузки цены золота", e);
     return null;
@@ -100,7 +99,6 @@ async function updateGoldPrice(currencyRates) {
 
   // 1 унция = 31.1035 грамма
   const pricePerGramUSD = pricePerOunceUSD / 31.1035;
-  // Переводим в PLN
   const pricePerGramPLN = pricePerGramUSD * currencyRates.USD;
   gold1gEl.textContent = `Цена золота: 1 г = ${pricePerGramPLN.toFixed(2)} PLN`;
   gold20gEl.textContent = `Цена золота: 20 г = ${(pricePerGramPLN * 20).toFixed(2)} PLN`;
