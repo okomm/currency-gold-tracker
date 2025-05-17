@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Курсы валют и золото</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      padding: 2em;
+    }
+    .card {
+      background: white;
+      padding: 1.5em;
+      margin-bottom: 1em;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 1.8em;
+    }
+    .value {
+      font-size: 1.4em;
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+  <h1>Курсы валют и золото (обновляется ежедневно)</h1>
+
+  <div class="card" id="currency-rates">
+    <h2>Курсы валют к PLN:</h2>
+    <div class="value" id="usd"></div>
+    <div class="value" id="eur"></div>
+    <div class="value" id="chf"></div>
+    <div class="value" id="sgd"></div>
+  </div>
+
+  <div class="card" id="gold-price">
+    <h2>Золото:</h2>
+    <div class="value" id="gold-1g"></div>
+    <div class="value" id="gold-20g"></div>
+  </div>
+
+  <script>
+    async function fetchExchangeRates() {
+      const currencies = ['USD', 'EUR', 'CHF', 'SGD'];
+      for (const cur of currencies) {
+        const res = await fetch(`https://api.exchangerate.host/latest?base=${cur}&symbols=PLN`);
+        const data = await res.json();
+        const rate = data.rates.PLN.toFixed(4);
+        document.getElementById(cur.toLowerCase()).textContent = `${cur} → PLN: ${rate}`;
+      }
+    }
+
+    async function fetchGoldPrice() {
+      try {
+        const res = await fetch("https://api.nbp.pl/api/cenyzlota/today?format=json");
+        const data = await res.json();
+        const price = data[0].cena.toFixed(2);
+        document.getElementById("gold-1g").textContent = `1 г золота: ${price} PLN`;
+        document.getElementById("gold-20g").textContent = `20 г золота: ${(price * 20).toFixed(2)} PLN`;
+      } catch (e) {
+        document.getElementById("gold-1g").textContent = "Ошибка при получении данных золота";
+      }
+    }
+
+    fetchExchangeRates();
+    fetchGoldPrice();
+  </script>
+</body>
+</html>
